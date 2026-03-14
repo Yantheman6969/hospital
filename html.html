@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare Login Portal</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="login-card">
+            <!-- Header -->
+            <div class="login-header">
+                <div class="header-icon">🏥</div>
+                <h1>HealthCare Portal</h1>
+                <p>Secure Login Management System</p>
+            </div>
+
+            <!-- Messages -->
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+
+            <!-- Unified Login Form -->
+            <div class="login-form">
+                <h3 style="text-align: center; margin-bottom: 20px;">🔐 Login</h3>
+                <form onsubmit="unifiedLogin(event)">
+                    <div class="form-group">
+                        <label for="loginUsername">Username</label>
+                        <input type="text" id="loginUsername" placeholder="Enter email or admin ID" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="loginPassword">Password</label>
+                        <div class="password-toggle">
+                            <input type="password" id="loginPassword" placeholder="Enter your password" required>
+                            <button type="button" class="show-password" onclick="togglePassword('loginPassword')">👁️</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="login-btn">Login</button>
+                </form>
+                <p style="text-align: center; margin-top: 15px;">
+                    Don't have an account? <a href="#" onclick="switchToSignup(event)" style="color: #007bff; text-decoration: none;">Sign Up Here</a>
+                </p>
+            </div>
+
+            <!-- User Signup Form -->
+            <div id="signupForm" class="login-form" style="display: none;">
+                <h3 style="text-align: center; margin-bottom: 20px;">📝 Create Account</h3>
+                <form onsubmit="userSignup(event)">
+                    <div class="form-group">
+                        <label for="signupName">Full Name</label>
+                        <input type="text" id="signupName" placeholder="Enter your full name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupEmail">Email Address</label>
+                        <input type="email" id="signupEmail" placeholder="Enter your email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPassword">Password</label>
+                        <div class="password-toggle">
+                            <input type="password" id="signupPassword" placeholder="Minimum 6 characters" required>
+                            <button type="button" class="show-password" onclick="togglePassword('signupPassword')">👁️</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupConfirmPassword">Confirm Password</label>
+                        <div class="password-toggle">
+                            <input type="password" id="signupConfirmPassword" placeholder="Confirm your password" required>
+                            <button type="button" class="show-password" onclick="togglePassword('signupConfirmPassword')">👁️</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupPhone">Phone Number</label>
+                        <input type="tel" id="signupPhone" placeholder="Enter your phone number" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signupDOB">Date of Birth</label>
+                        <input type="date" id="signupDOB" required>
+                    </div>
+                    <button type="submit" class="login-btn">Create Account</button>
+                </form>
+                <p style="text-align: center; margin-top: 15px;">
+                    Already have an account? <a href="#" onclick="switchToLogin(event)" style="color: #007bff; text-decoration: none;">Login Here</a>
+                </p>
+            </div>
+
+            <!-- Demo Info -->
+            <div class="footer-text" style="border-top: 1px solid #ddd; padding-top: 10px; margin-top: 20px; font-size: 12px; color: #666;">
+                <strong>Demo Credentials:</strong><br>
+                User: demo@example.com / demo123<br>
+                Admin: ADMIN001 / admin123
+            </div>
+
+    <script>
+        // Create demo account on first load
+        window.addEventListener('DOMContentLoaded', function() {
+            createDemoAccount();
+            clearMessages();
+        });
+
+        function createDemoAccount() {
+            let users = JSON.parse(localStorage.getItem('healthcareUsers') || '[]');
+            if (!Array.isArray(users)) users = [];
+            
+            if (users.length === 0) {
+                users.push({
+                    id: 'P001',
+                    name: 'Demo User',
+                    email: 'demo@example.com',
+                    password: 'demo123',
+                    phone: '555-0000',
+                    dob: '1990-01-01',
+                    role: 'user',
+                    createdDate: new Date().toISOString(),
+                    status: 'active'
+                });
+                localStorage.setItem('healthcareUsers', JSON.stringify(users));
+            }
+        }
+
+        // ============ UNIFIED LOGIN ============
+        function unifiedLogin(e) {
+            e.preventDefault();
+            clearMessages();
+
+            const username = String(document.getElementById('loginUsername').value || '').trim();
+            const password = String(document.getElementById('loginPassword').value || '').trim();
+
+            if (!username) {
+                showError('Please enter your username');
+                return;
+            }
+            if (!password) {
+                showError('Please enter your password');
+                return;
+            }
+
+            // Check if admin login
+            if (username === 'ADMIN001' && password === 'admin123') {
+                showSuccess('✓ Admin login successful!');
+                setTimeout(() => {
+                    sessionStorage.setItem('userInfo', JSON.stringify({
+                        name: 'Admin',
+                        role: 'admin',
+                        adminId: username
+                    }));
+                    window.location.href = 'emr-dashboard.html';
+                }, 800);
+                return;
+            }
+
+            // Check if user login (username is email)
+            if (validateEmail(username)) {
+                let users = [];
+                try {
+                    const data = localStorage.getItem('healthcareUsers');
+                    if (data) users = JSON.parse(data);
+                    if (!Array.isArray(users)) users = [];
+                } catch (e) {
+                    showError('Database error');
+                    return;
+                }
+
+                // Find user
+                let user = null;
+                for (let i = 0; i < users.length; i++) {
+                    if (String(users[i].email || '').toLowerCase() === username.toLowerCase() && 
+                        String(users[i].password || '') === password) {
+                        user = users[i];
+                        break;
+                    }
+                }
+
+                if (user) {
+                    showSuccess('✓ Login successful!');
+                    setTimeout(() => {
+                        sessionStorage.setItem('userInfo', JSON.stringify({
+                            id: user.id,
+                            name: user.name,
+                            role: 'user',
+                            email: user.email,
+                            phone: user.phone,
+                            dob: user.dob
+                        }));
+                        window.location.href = 'emr-dashboard.html';
+                    }, 800);
+                    return;
+                }
+            }
+
+            showError('❌ Invalid username or password');
+        }
+
+        // ============ SWITCH TO SIGNUP/LOGIN ============
+        function switchToSignup(e) {
+            e.preventDefault();
+            document.querySelector('.login-form:not(#signupForm)').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'block';
+            clearMessages();
+        }
+
+        function switchToLogin(e) {
+            e.preventDefault();
+            document.getElementById('signupForm').style.display = 'none';
+            document.querySelector('.login-form:not(#signupForm)').style.display = 'block';
+            clearMessages();
+        }
+
+        // ============ USER SIGNUP ============
+        function userSignup(e) {
+            e.preventDefault();
+            clearMessages();
+
+            const name = String(document.getElementById('signupName').value || '').trim();
+            const email = String(document.getElementById('signupEmail').value || '').trim().toLowerCase();
+            const password = String(document.getElementById('signupPassword').value || '').trim();
+            const confirmPassword = String(document.getElementById('signupConfirmPassword').value || '').trim();
+            const phone = String(document.getElementById('signupPhone').value || '').trim();
+            const dob = String(document.getElementById('signupDOB').value || '').trim();
+
+            if (!name) { showError('Please enter your name'); return; }
+            if (!email) { showError('Please enter your email'); return; }
+            if (!password) { showError('Please enter your password'); return; }
+            if (!confirmPassword) { showError('Please confirm your password'); return; }
+            if (!phone) { showError('Please enter your phone'); return; }
+            if (!dob) { showError('Please enter your date of birth'); return; }
+
+            if (!validateEmail(email)) { showError('Invalid email'); return; }
+            if (password.length < 6) { showError('Password must be 6+ characters'); return; }
+            if (password !== confirmPassword) { showError('Passwords do not match'); return; }
+
+            // Get users
+            let users = [];
+            try {
+                const data = localStorage.getItem('healthcareUsers');
+                if (data) users = JSON.parse(data);
+                if (!Array.isArray(users)) users = [];
+            } catch (e) {
+                showError('Database error');
+                return;
+            }
+
+            // Check if exists
+            if (users.find(u => String(u.email || '').toLowerCase() === email)) {
+                showError('Email already registered');
+                return;
+            }
+
+            // Create new user
+            const newId = 'P' + String(users.length + 1).padStart(3, '0');
+            const newUser = {
+                id: newId,
+                name: name,
+                email: email,
+                password: password,
+                phone: phone,
+                dob: dob,
+                role: 'user',
+                createdDate: new Date().toISOString(),
+                status: 'active'
+            };
+
+            users.push(newUser);
+            try {
+                localStorage.setItem('healthcareUsers', JSON.stringify(users));
+            } catch (e) {
+                showError('Error saving account');
+                return;
+            }
+
+            // Notify admin
+            let notifications = [];
+            try {
+                const data = localStorage.getItem('adminNotifications');
+                if (data) notifications = JSON.parse(data);
+                if (!Array.isArray(notifications)) notifications = [];
+            } catch (e) {}
+
+            notifications.push({
+                id: 'N' + Date.now(),
+                type: 'new_user',
+                message: 'New patient: ' + name + ' (' + email + ')',
+                patientId: newId,
+                patientName: name,
+                patientEmail: email,
+                timestamp: new Date().toISOString(),
+                read: false
+            });
+
+            try {
+                localStorage.setItem('adminNotifications', JSON.stringify(notifications));
+            } catch (e) {}
+
+            showSuccess('✓ Account created! Logging in...');
+            setTimeout(() => {
+                sessionStorage.setItem('userInfo', JSON.stringify({
+                    id: newUser.id,
+                    name: newUser.name,
+                    role: 'user',
+                    email: newUser.email,
+                    phone: newUser.phone,
+                    dob: newUser.dob
+                }));
+                window.location.href = 'emr-dashboard.html';
+            }, 1000);
+        }
+
+        // ============ UTILITIES ============
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function togglePassword(id) {
+            const field = document.getElementById(id);
+            if (field) field.type = field.type === 'password' ? 'text' : 'password';
+        }
+
+        function showError(msg) {
+            const div = document.getElementById('errorMessage');
+            if (div) {
+                div.textContent = msg;
+                div.style.display = 'block';
+            }
+        }
+
+        function showSuccess(msg) {
+            const div = document.getElementById('successMessage');
+            if (div) {
+                div.textContent = msg;
+                div.style.display = 'block';
+            }
+        }
+
+        function clearMessages() {
+            const errDiv = document.getElementById('errorMessage');
+            const sucDiv = document.getElementById('successMessage');
+            if (errDiv) errDiv.style.display = 'none';
+            if (sucDiv) sucDiv.style.display = 'none';
+        }
+
+        function clearAllForms() {
+            // Unified login
+            const username = document.getElementById('loginUsername');
+            const password = document.getElementById('loginPassword');
+            if (username) username.value = '';
+            if (password) password.value = '';
+
+            // User signup
+            ['signupName', 'signupEmail', 'signupPassword', 'signupConfirmPassword', 'signupPhone', 'signupDOB'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        }
+    </script>
+</body>
+</html>

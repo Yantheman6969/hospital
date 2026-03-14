@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healthcare EMR System - Dashboard</title>
+    <link rel="stylesheet" href="emr-style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <span class="logo-icon">🏥</span>
+                <span>HealthCare EMR System</span>
+            </div>
+            <div class="nav-right">
+                <span class="user-info" id="userInfo"></span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="main-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-menu">
+                <h3 class="menu-title">Menu</h3>
+                <ul class="menu-list">
+                    <li><button class="menu-item active" onclick="switchTab('dashboard')">📊 Dashboard</button></li>
+                    <li><button class="menu-item" id="recordsBtn" onclick="switchTab('records')">📋 Health Records</button></li>
+                    <li><button class="menu-item" id="appointmentsBtn" onclick="switchTab('appointments')">📅 Appointments</button></li>
+                    <li><button class="menu-item" id="alartsBtn" onclick="switchTab('alerts')">⚠️ Alerts</button></li>
+                    <li><button class="menu-item" id="adminBtn" style="display:none;" onclick="switchTab('admin')">⚙️ Admin Panel</button></li>
+                    <li><button class="menu-item" id="facilitiesBtn" style="display:none;" onclick="switchTab('facilities')">🏢 Facilities</button></li>
+                </ul>
+            </div>
+        </aside>
+
+        <!-- Content Area -->
+        <main class="content">
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-panel active">
+                <div class="header-section">
+                    <h1 id="dashboardTitle">Patient Dashboard</h1>
+                    <p id="dashboardSubtitle">Welcome to your Healthcare EMR Portal</p>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">📋</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Total Records</div>
+                            <div class="stat-value" id="totalRecords">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🏥</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Facilities Accessed</div>
+                            <div class="stat-value" id="facilitiesCount">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔬</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Recent Tests</div>
+                            <div class="stat-value" id="recentTests">0</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💊</div>
+                        <div class="stat-content">
+                            <div class="stat-label">Active Prescriptions</div>
+                            <div class="stat-value" id="activePrescriptions">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="section-card">
+                    <h2>Recent Activity Across Facilities</h2>
+                    <div class="activity-list" id="activityList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Health Records Tab -->
+            <div id="records" class="tab-panel">
+                <div class="header-section">
+                    <h1>Health Records</h1>
+                    <p>View your complete medical history across all facilities</p>
+                </div>
+
+                <!-- Facility Filter -->
+                <div class="filter-section">
+                    <label>Filter by Facility:</label>
+                    <select id="facilityFilter" onchange="filterRecords()">
+                        <option value="">All Facilities</option>
+                    </select>
+                </div>
+
+                <!-- Records Tabs -->
+                <div class="records-tabs">
+                    <button class="record-tab active" onclick="switchRecordType('medical')">Medical History</button>
+                    <button class="record-tab" onclick="switchRecordType('lab')">Lab Results</button>
+                    <button class="record-tab" onclick="switchRecordType('imaging')">Imaging Reports</button>
+                    <button class="record-tab" onclick="switchRecordType('prescriptions')">Prescriptions</button>
+                    <button class="record-tab" onclick="switchRecordType('appointments')">Appointments</button>
+                </div>
+
+                <!-- Records Content -->
+                <div id="recordsContent" class="section-card">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Alerts Tab -->
+            <div id="alerts" class="tab-panel">
+                <div class="header-section">
+                    <h1>Health Alerts & Warnings</h1>
+                    <p>Real-time notifications from healthcare providers</p>
+                </div>
+
+                <div class="alerts-container" id="alertsContainer">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Appointments Tab -->
+            <div id="appointments" class="tab-panel">
+                <div class="header-section">
+                    <h1>Book Appointments</h1>
+                    <p>Schedule appointments at connected healthcare facilities</p>
+                </div>
+
+                <div class="section-card">
+                    <h2>Available Facilities</h2>
+                    <div class="facilities-appointment-grid" id="facilitiesAppointmentGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="section-card" id="bookedAppointmentsCard">
+                    <h2>Your Booked Appointments</h2>
+                    <div class="booked-appointments-list" id="bookedAppointmentsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Panel Tab -->
+            <div id="admin" class="tab-panel">
+                <div class="header-section">
+                    <h1>Admin Panel</h1>
+                    <p>Manage patient records and healthcare facilities</p>
+                </div>
+
+                <!-- Admin Tabs -->
+                <div class="admin-tabs">
+                    <button class="admin-tab active" onclick="switchAdminTab('patients')">👥 Patient Management</button>
+                    <button class="admin-tab" onclick="switchAdminTab('records')">📊 Records Management</button>
+                    <button class="admin-tab" onclick="switchAdminTab('analytics')">📈 Analytics</button>
+                </div>
+
+                <!-- Patient Management -->
+                <div id="patientsTab" class="admin-content">
+                    <div class="search-section">
+                        <input type="text" id="patientSearch" placeholder="Search patients..." onkeyup="searchPatients()">
+                    </div>
+                    <div class="patients-list" id="patientsList">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Records Management -->
+                <div id="recordsTab" class="admin-content" style="display:none;">
+                    <div class="section-card">
+                        <h2>All Patient Records</h2>
+                        <div class="records-list" id="allRecordsList">
+                            <!-- Populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Analytics -->
+                <div id="analyticsTab" class="admin-content" style="display:none;">
+                    <div class="analytics-grid">
+                        <div class="analytics-card">
+                            <h3>Total Patients</h3>
+                            <div class="analytics-value" id="totalPatients">0</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Active Records</h3>
+                            <div class="analytics-value" id="activeRecords">0</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Facilities Connected</h3>
+                            <div class="analytics-value" id="connectedFacilities">0</div>
+                        </div>
+                        <div class="analytics-card">
+                            <h3>Tests Conducted</h3>
+                            <div class="analytics-value" id="testsConducted">0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Facilities Management Tab -->
+            <div id="facilities" class="tab-panel">
+                <div class="header-section">
+                    <h1>Facilities Management</h1>
+                    <p>Manage healthcare facilities and their connections</p>
+                </div>
+
+                <div class="section-card">
+                    <div class="facilities-grid" id="facilitiesGrid">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for Patient Details -->
+    <div id="patientModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closePatientModal()">&times;</span>
+            <h2>Patient Records</h2>
+            <div id="patientDetails">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Appointment Booking -->
+    <div id="appointmentModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeAppointmentModal()">&times;</span>
+            <h2>Book Appointment</h2>
+            <form id="appointmentForm" onsubmit="submitAppointment(event)">
+                <div class="form-group">
+                    <label for="appointmentFacility">Facility:</label>
+                    <input type="text" id="appointmentFacility" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="appointmentDate">Preferred Date:</label>
+                    <input type="date" id="appointmentDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="appointmentTime">Preferred Time:</label>
+                    <select id="appointmentTime" required>
+                        <option value="">Select a time</option>
+                        <option value="09:00">09:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="11:00">11:00 AM</option>
+                        <option value="14:00">02:00 PM</option>
+                        <option value="15:00">03:00 PM</option>
+                        <option value="16:00">04:00 PM</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="appointmentService">Service Type:</label>
+                    <select id="appointmentService" required onchange="updateServiceOptions()">
+                        <option value="">Select a service</option>
+                        <option value="General Checkup">General Checkup</option>
+                        <option value="Follow-up">Follow-up</option>
+                        <option value="Urgent Care">Urgent Care</option>
+                        <option value="Consultation">Consultation</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="appointmentReason">Reason for Visit:</label>
+                    <textarea id="appointmentReason" placeholder="Describe your symptoms or concerns" required></textarea>
+                </div>
+
+                <button type="submit" class="login-btn">Book Appointment</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="emr-dashboard.js"></script>
+</body>
+</html>
